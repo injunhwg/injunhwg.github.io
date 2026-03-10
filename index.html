@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classroom Trading Simulator Pro</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --line: #334155;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --buy: #22c55e;
+      --sell: #ef4444;
+      --accent: #38bdf8;
+      --warning: #f59e0b;
+      --danger: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+      color: var(--text);
+    }
+    .wrap { max-width: 1650px; margin: 0 auto; padding: 18px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .subtitle { color: var(--muted); margin-bottom: 16px; }
+    .top-metrics, .student-metrics {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .student-metrics { grid-template-columns: repeat(7, 1fr); }
+    .metric {
+      background: rgba(17,24,39,0.96);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .value { font-size: 20px; font-weight: 700; }
+    .small-value { font-size: 16px; font-weight: 700; }
+    .positive { color: var(--buy); }
+    .negative { color: var(--sell); }
+    .warning { color: var(--warning); }
+    .danger { color: var(--danger); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1.15fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: rgba(17,24,39,0.96);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; }
+    .panel h3 { margin: 16px 0 10px; font-size: 15px; }
+    .controls, .order-form, .student-controls {
+      display: grid;
+      gap: 10px;
+    }
+    .controls { grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 10px; }
+    .order-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .student-controls { grid-template-columns: 1.5fr 1fr 1fr; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0b1220;
+      color: var(--text);
+      font-size: 14px;
+    }
+    button { cursor: pointer; font-weight: 600; transition: .15s ease; }
+    button:hover { transform: translateY(-1px); border-color: var(--accent); }
+    button.primary { background: #082f49; border-color: #0369a1; }
+    button.buy { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.45); }
+    button.sell { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.45); }
+    button.warn { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.45); }
+    button.danger { background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.45); }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid #243041; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid currentColor; font-size: 12px; font-weight: 700;
+    }
+    .buy-text, .pill.buy { color: var(--buy); }
+    .sell-text, .pill.sell { color: var(--sell); }
+    .stop-text, .pill.stop { color: var(--warning); }
+    .log {
+      max-height: 320px; overflow: auto; border: 1px solid var(--line);
+      border-radius: 12px; background: #0b1220;
+    }
+    .log-item { padding: 10px 12px; border-bottom: 1px solid #243041; font-size: 13px; line-height: 1.4; }
+    .small { font-size: 12px; color: var(--muted); }
+    .chart-box { border: 1px solid var(--line); border-radius: 12px; background: #0b1220; padding: 8px; margin-bottom: 12px; }
+    canvas { width: 100%; height: 250px; display: block; }
+    .footer-note { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .alert-box {
+      border: 1px solid rgba(245,158,11,0.45); background: rgba(245,158,11,0.08);
+      padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; margin-top: 10px;
+    }
+    .leader-top td { background: rgba(56,189,248,0.06); }
+    .tag { font-size: 12px; color: var(--muted); }
+    textarea { min-height: 110px; resize: vertical; }
+    @media (max-width: 1280px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: repeat(3, 1fr); }
+      .top-metrics, .student-metrics { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .controls, .order-form, .student-controls, .top-metrics, .student-metrics, .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Classroom Trading Simulator Pro</h1>
+    <div class="subtitle">투자론 수업용 확장판 · 여러 학생 동시 참가 · Market / Limit / Stop Order · Short Selling · Margin / Maintenance Margin · 강제청산 체험</div>
+
+    <div class="top-metrics">
+      <div class="metric"><div class="label">현재 가격</div><div class="value" id="lastPrice">100.00</div></div>
+      <div class="metric"><div class="label">틱</div><div class="value" id="tickNum">0</div></div>
+      <div class="metric"><div class="label">시장 추세</div><div class="small-value" id="trendLabel">중립</div></div>
+      <div class="metric"><div class="label">최우선 매수호가</div><div class="small-value" id="bestBid">99.94</div></div>
+      <div class="metric"><div class="label">최우선 매도호가</div><div class="small-value" id="bestAsk">100.06</div></div>
+      <div class="metric"><div class="label">활성 학생 수</div><div class="value" id="studentCount">4</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>시장 시뮬레이션</h2>
+        <div class="chart-box"><canvas id="priceChart" width="760" height="250"></canvas></div>
+        <div class="controls">
+          <div>
+            <label>종목명</label>
+            <input id="symbol" value="ACME" maxlength="10" />
+          </div>
+          <div>
+            <label>변동성</label>
+            <select id="volatility">
+              <option value="0.005">낮음</option>
+              <option value="0.012" selected>보통</option>
+              <option value="0.022">높음</option>
+            </select>
+          </div>
+          <div>
+            <label>드리프트</label>
+            <select id="drift">
+              <option value="-0.0008">하락장</option>
+              <option value="0" selected>중립</option>
+              <option value="0.0008">상승장</option>
+            </select>
+          </div>
+          <div>
+            <label>스프레드(bps)</label>
+            <select id="spreadBps">
+              <option value="6">좁음</option>
+              <option value="12" selected>보통</option>
+              <option value="25">넓음</option>
+            </select>
+          </div>
+          <div>
+            <label>틱 속도(ms)</label>
+            <input id="speed" type="number" value="800" min="120" step="50" />
+          </div>
+          <div>
+            <label>기본 학생 수</label>
+            <input id="newStudentCount" type="number" value="4" min="2" max="12" />
+          </div>
+          <div><label>&nbsp;</label><button class="primary" id="stepBtn">1틱 진행</button></div>
+          <div><label>&nbsp;</label><button id="playBtn">자동 진행 시작</button></div>
+          <div><label>&nbsp;</label><button id="pauseBtn">자동 진행 정지</button></div>
+          <div><label>&nbsp;</label><button class="warn" id="newsBtn">랜덤 뉴스 이벤트</button></div>
+          <div><label>&nbsp;</label><button id="botBtn">모든 학생 자동주문 1회</button></div>
+          <div><label>&nbsp;</label><button class="danger" id="resetBtn">전체 초기화</button></div>
+        </div>
+        <div class="footer-note">
+          수업 운영 방식: 한 학생을 선택해 수동 주문을 넣고, 나머지는 자동주문 버튼으로 경쟁시키면 주문 유형과 레버리지, 공매도의 위험을 동시에 체험할 수 있습니다.
+        </div>
+        <div class="alert-box">
+          <strong>핵심 개념</strong><br>
+          Market order는 즉시 최우선 호가에서 체결됩니다. Limit order는 유리한 가격 도달 시 체결됩니다. Stop order는 손절 또는 추세추종 용도로 발동된 뒤 시장가 주문처럼 실행됩니다. Short selling은 주가 하락 시 이익이 나지만 상승 시 손실이 커질 수 있습니다. Margin ratio가 maintenance margin 아래로 내려가면 자동 강제청산이 일어납니다.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>학생 관리 & 주문 입력</h2>
+        <div class="student-controls">
+          <div>
+            <label>활성 학생 선택</label>
+            <select id="activeStudent"></select>
+          </div>
+          <div>
+            <label>새 학생 이름</label>
+            <input id="studentName" placeholder="예: Team 5" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="addStudentBtn">학생 추가</button>
+          </div>
+        </div>
+
+        <h3>선택한 학생 계좌 요약</h3>
+        <div class="student-metrics">
+          <div class="metric"><div class="label">현금</div><div class="small-value" id="cash">100,000.00</div></div>
+          <div class="metric"><div class="label">포지션</div><div class="small-value" id="position">0</div></div>
+          <div class="metric"><div class="label">평균단가</div><div class="small-value" id="avgCost">0.00</div></div>
+          <div class="metric"><div class="label">실현손익</div><div class="small-value" id="realizedPnl">0.00</div></div>
+          <div class="metric"><div class="label">미실현손익</div><div class="small-value" id="unrealizedPnl">0.00</div></div>
+          <div class="metric"><div class="label">순자산</div><div class="small-value" id="equity">100,000.00</div></div>
+          <div class="metric"><div class="label">Margin Ratio</div><div class="small-value" id="marginRatio">∞</div></div>
+        </div>
+
+        <div class="order-form">
+          <div>
+            <label>매수/매도</label>
+            <select id="side">
+              <option value="buy">매수 (Buy)</option>
+              <option value="sell">매도 (Sell)</option>
+            </select>
+          </div>
+          <div>
+            <label>주문 유형</label>
+            <select id="orderType">
+              <option value="market">Market Order</option>
+              <option value="limit">Limit Order</option>
+              <option value="stop">Stop Order</option>
+            </select>
+          </div>
+          <div>
+            <label>수량</label>
+            <input id="quantity" type="number" value="100" min="1" step="1" />
+          </div>
+          <div>
+            <label id="priceLabel">지정가 (Limit/Stop)</label>
+            <input id="priceInput" type="number" value="99.50" min="0.01" step="0.01" />
+          </div>
+          <div>
+            <label>Initial Margin</label>
+            <select id="initialMargin">
+              <option value="0.5" selected>50%</option>
+              <option value="0.4">40%</option>
+              <option value="0.3">30%</option>
+              <option value="0.2">20%</option>
+            </select>
+          </div>
+          <div>
+            <label>Maintenance Margin</label>
+            <select id="maintenanceMargin">
+              <option value="0.35" selected>35%</option>
+              <option value="0.30">30%</option>
+              <option value="0.25">25%</option>
+              <option value="0.20">20%</option>
+            </select>
+          </div>
+          <div class="full split">
+            <button class="buy" id="submitOrderBtn">주문 제출</button>
+            <button id="cancelStudentOrdersBtn">선택 학생 미체결 주문 취소</button>
+          </div>
+        </div>
+
+        <h3>수업용 미션</h3>
+        <textarea id="missions">1) 학생 A는 market buy 100주, 학생 B는 limit buy 100주를 넣고 체결 시점 비교하기
+2) stop sell order로 손절 전략 구성하기
+3) short selling으로 200주 매도 후 가격 상승 시 손실 구조 설명하기
+4) initial margin을 30%로 낮춘 뒤 레버리지 확대가 equity에 미치는 영향 보기
+5) maintenance margin 미달 시 강제청산 로그 확인하기
+6) 학생별 수익률 순위를 보고 주문 전략 토론하기</textarea>
+      </div>
+
+      <div class="panel">
+        <h2>리더보드 & 주문장</h2>
+        <h3>학생 순위</h3>
+        <table>
+          <thead>
+            <tr><th>순위</th><th>학생</th><th>포지션</th><th>현금</th><th>순자산</th><th>P&L</th><th>Margin</th></tr>
+          </thead>
+          <tbody id="leaderboard"></tbody>
+        </table>
+
+        <h3>주문장(Order Book)</h3>
+        <div class="split">
+          <div>
+            <table>
+              <thead><tr><th colspan="3">매도 호가</th></tr><tr><th>레벨</th><th>가격</th><th>수량</th></tr></thead>
+              <tbody id="askBook"></tbody>
+            </table>
+          </div>
+          <div>
+            <table>
+              <thead><tr><th colspan="3">매수 호가</th></tr><tr><th>레벨</th><th>가격</th><th>수량</th></tr></thead>
+              <tbody id="bidBook"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3>미체결 주문</h3>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>학생</th><th>구분</th><th>유형</th><th>수량</th><th>가격</th><th>상태</th></tr>
+          </thead>
+          <tbody id="openOrders"></tbody>
+        </table>
+
+        <h3>체결/이벤트 로그</h3>
+        <div class="log" id="logBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      symbol: 'ACME',
+      lastPrice: 100,
+      history: Array.from({ length: 45 }, (_, i) => 100 + Math.sin(i / 5) * 0.9),
+      bidBook: [],
+      askBook: [],
+      tick: 0,
+      orderId: 1,
+      studentId: 1,
+      students: [],
+      activeStudentId: 1,
+      volatility: 0.012,
+      drift: 0,
+      spreadBps: 12,
+      newsShock: 0,
+      timer: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function fmt(n) {
+      return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function rnd(min, max) { return Math.random() * (max - min) + min; }
+
+    function normalRandom() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function log(message, cls='') {
+      const div = document.createElement('div');
+      div.className = 'log-item ' + cls;
+      div.innerHTML = `<div>${message}</div><div class="small">${new Date().toLocaleTimeString('ko-KR')}</div>`;
+      $('logBox').prepend(div);
+    }
+
+    function createStudent(name) {
+      return {
+        id: state.studentId++,
+        name,
+        cash: 100000,
+        position: 0,
+        avgCost: 0,
+        realizedPnl: 0,
+        initialMargin: 0.5,
+        maintenanceMargin: 0.35,
+        openOrders: [],
+        lockedMargin: 0,
+        autoStyle: Math.random() < 0.5 ? 'trend' : 'mean'
+      };
+    }
+
+    function seedStudents(count=4) {
+      state.students = [];
+      state.studentId = 1;
+      for (let i = 1; i <= count; i++) state.students.push(createStudent(`Student ${i}`));
+      state.activeStudentId = state.students[0].id;
+    }
+
+    function activeStudent() {
+      return state.students.find(s => s.id === Number(state.activeStudentId));
+    }
+
+    function rebuildBook() {
+      const mid = state.lastPrice;
+      const spread = mid * state.spreadBps / 10000;
+      state.bidBook = [];
+      state.askBook = [];
+      for (let i = 1; i <= 5; i++) {
+        const askP = +(mid + spread/2 + (i-1)*mid*0.0016).toFixed(2);
+        const bidP = +(mid - spread/2 - (i-1)*mid*0.0016).toFixed(2);
+        state.askBook.push({ level: i, price: askP, qty: Math.round(rnd(120, 500)) });
+        state.bidBook.push({ level: i, price: bidP, qty: Math.round(rnd(120, 500)) });
+      }
+    }
+
+    function getUnrealized(s) {
+      if (s.position >= 0) return (state.lastPrice - s.avgCost) * s.position;
+      return (s.avgCost - state.lastPrice) * Math.abs(s.position);
+    }
+
+    function getMarketValue(s) {
+      return s.position * state.lastPrice;
+    }
+
+    function getEquity(s) {
+      return s.cash + getMarketValue(s);
+    }
+
+    function getExposure(s) {
+      return Math.abs(s.position) * state.lastPrice;
+    }
+
+    function getMarginRatio(s) {
+      const exposure = getExposure(s);
+      if (exposure === 0) return Infinity;
+      return getEquity(s) / exposure;
+    }
+
+    function canPlaceOrder(s, side, qty, refPrice, initialMargin) {
+      const tentativePos = s.position + (side === 'buy' ? qty : -qty);
+      const extraExposure = Math.max(0, Math.abs(tentativePos) * refPrice - Math.abs(s.position) * state.lastPrice);
+      const required = extraExposure * initialMargin;
+      return s.cash >= required;
+    }
+
+    function executeTrade(student, side, qty, price, source='주문 체결') {
+      qty = Number(qty);
+      price = Number(price);
+      if (qty <= 0) return;
+
+      if (side === 'buy') {
+        if (student.position >= 0) {
+          const additionalExposure = qty * price;
+          const requiredMargin = additionalExposure * student.initialMargin;
+          if (student.cash < requiredMargin) {
+            log(`${student.name}: 매수 체결 실패 · 필요 증거금 ${fmt(requiredMargin)} / 보유 현금 ${fmt(student.cash)}`, 'danger');
+            return;
+          }
+          student.cash -= requiredMargin;
+          const totalCost = student.avgCost * student.position + qty * price;
+          student.position += qty;
+          student.avgCost = student.position === 0 ? 0 : totalCost / student.position;
+          student.lockedMargin += requiredMargin;
+        } else {
+          const shortQty = Math.abs(student.position);
+          const coverQty = Math.min(qty, shortQty);
+          student.cash += (student.avgCost - price) * coverQty;
+          student.realizedPnl += (student.avgCost - price) * coverQty;
+          const releasedMargin = shortQty === 0 ? 0 : student.lockedMargin * (coverQty / shortQty);
+          student.lockedMargin -= releasedMargin;
+          student.position += coverQty;
+          qty -= coverQty;
+          if (student.position === 0) student.avgCost = 0;
+          if (qty > 0) {
+            const requiredMargin = qty * price * student.initialMargin;
+            if (student.cash < requiredMargin) {
+              log(`${student.name}: 숏 커버 후 추가 매수 실패 · 현금 부족`, 'warning');
+            } else {
+              student.cash -= requiredMargin;
+              student.position += qty;
+              student.avgCost = price;
+              student.lockedMargin += requiredMargin;
+            }
+          }
+        }
+      } else {
+        if (student.position <= 0) {
+          const additionalExposure = qty * price;
+          const requiredMargin = additionalExposure * student.initialMargin;
+          if (student.cash < requiredMargin) {
+            log(`${student.name}: 공매도 체결 실패 · 필요 증거금 ${fmt(requiredMargin)} / 보유 현금 ${fmt(student.cash)}`, 'danger');
+            return;
+          }
+          student.cash -= requiredMargin;
+          const absPos = Math.abs(student.position);
+          const totalBasis = student.avgCost * absPos + qty * price;
+          student.position -= qty;
+          student.avgCost = totalBasis / Math.abs(student.position);
+          student.lockedMargin += requiredMargin;
+        } else {
+          const longQty = student.position;
+          const sellQty = Math.min(qty, longQty);
+          student.cash += sellQty * price * (1 - student.initialMargin) + (student.lockedMargin * (sellQty / longQty || 0));
+          student.realizedPnl += (price - student.avgCost) * sellQty;
+          student.lockedMargin -= student.lockedMargin * (sellQty / longQty || 0);
+          student.position -= sellQty;
+          qty -= sellQty;
+          if (student.position === 0) student.avgCost = 0;
+          if (qty > 0) {
+            const requiredMargin = qty * price * student.initialMargin;
+            if (student.cash < requiredMargin) {
+              log(`${student.name}: 롱 청산 후 추가 공매도 실패 · 현금 부족`, 'warning');
+            } else {
+              student.cash -= requiredMargin;
+              student.position -= qty;
+              student.avgCost = price;
+              student.lockedMargin += requiredMargin;
+            }
+          }
+        }
+      }
+      log(`${student.name}: <span class="pill ${side}">${side.toUpperCase()}</span> ${qty}주 @ ${fmt(price)} · ${source}`);
+    }
+
+    function submitOrder() {
+      const student = activeStudent();
+      const side = $('side').value;
+      const type = $('orderType').value;
+      const qty = Math.max(1, Number($('quantity').value || 0));
+      const refPrice = side === 'buy' ? state.askBook[0].price : state.bidBook[0].price;
+      const triggerOrLimit = Number($('priceInput').value || 0);
+      student.initialMargin = Number($('initialMargin').value);
+      student.maintenanceMargin = Number($('maintenanceMargin').value);
+
+      if (type === 'market') {
+        executeTrade(student, side, qty, refPrice, 'Market order 즉시 체결');
+      } else {
+        if (triggerOrLimit <= 0) {
+          alert('가격을 입력하세요.');
+          return;
+        }
+        const order = {
+          id: state.orderId++, studentId: student.id, studentName: student.name,
+          side, type, qty, remaining: qty, triggerPrice: triggerOrLimit,
+          initialMargin: student.initialMargin, maintenanceMargin: student.maintenanceMargin,
+          status: 'OPEN'
+        };
+        student.openOrders.push(order);
+        log(`${student.name}: ${type.toUpperCase()} 주문 접수 · <span class="pill ${side}">${side.toUpperCase()}</span> ${qty}주 @ ${fmt(triggerOrLimit)}`);
+      }
+      render();
+    }
+
+    function processOpenOrders() {
+      const bestAsk = state.askBook[0].price;
+      const bestBid = state.bidBook[0].price;
+      for (const student of state.students) {
+        for (const order of student.openOrders) {
+          if (order.status !== 'OPEN') continue;
+          let trigger = false;
+          let fillPrice = order.triggerPrice;
+
+          if (order.type === 'limit') {
+            if (order.side === 'buy' && order.triggerPrice >= bestAsk) { trigger = true; fillPrice = bestAsk; }
+            if (order.side === 'sell' && order.triggerPrice <= bestBid) { trigger = true; fillPrice = bestBid; }
+          }
+          if (order.type === 'stop') {
+            if (order.side === 'buy' && state.lastPrice >= order.triggerPrice) { trigger = true; fillPrice = bestAsk; }
+            if (order.side === 'sell' && state.lastPrice <= order.triggerPrice) { trigger = true; fillPrice = bestBid; }
+          }
+
+          if (trigger) {
+            student.initialMargin = order.initialMargin;
+            student.maintenanceMargin = order.maintenanceMargin;
+            executeTrade(student, order.side, order.remaining, fillPrice, `${order.type.toUpperCase()} order 체결 (ID ${order.id})`);
+            order.remaining = 0;
+            order.status = 'FILLED';
+          }
+        }
+        student.openOrders = student.openOrders.filter(o => o.status === 'OPEN');
+      }
+    }
+
+    function enforceMarginCalls() {
+      for (const s of state.students) {
+        const ratio = getMarginRatio(s);
+        if (s.position !== 0 && ratio < s.maintenanceMargin) {
+          const side = s.position > 0 ? 'sell' : 'buy';
+          const qty = Math.max(1, Math.ceil(Math.abs(s.position) / 2));
+          const price = side === 'sell' ? state.bidBook[0].price : state.askBook[0].price;
+          log(`${s.name}: Margin call 발생 · ratio ${ratio.toFixed(2)} < maintenance ${s.maintenanceMargin.toFixed(2)} · ${qty}주 강제청산`, 'danger');
+          executeTrade(s, side, qty, price, '강제청산');
+          s.openOrders = [];
+        }
+      }
+    }
+
+    function botRound() {
+      const activeId = Number(state.activeStudentId);
+      for (const s of state.students) {
+        if (s.id === activeId) continue;
+        s.initialMargin = 0.5;
+        s.maintenanceMargin = 0.35;
+        const momentum = state.history[state.history.length - 1] - state.history[state.history.length - 4] || 0;
+        const side = s.autoStyle === 'trend'
+          ? (momentum >= 0 ? 'buy' : 'sell')
+          : (momentum >= 0 ? 'sell' : 'buy');
+        const orderTypeRoll = Math.random();
+        const qty = [50, 100, 150, 200][Math.floor(Math.random() * 4)];
+
+        if (orderTypeRoll < 0.35) {
+          const price = side === 'buy' ? state.askBook[0].price : state.bidBook[0].price;
+          executeTrade(s, side, qty, price, '자동주문 Market');
+        } else if (orderTypeRoll < 0.75) {
+          const p = side === 'buy' ? +(state.lastPrice * rnd(0.985, 0.999)).toFixed(2) : +(state.lastPrice * rnd(1.001, 1.015)).toFixed(2);
+          s.openOrders.push({
+            id: state.orderId++, studentId: s.id, studentName: s.name, side, type: 'limit', qty, remaining: qty,
+            triggerPrice: p, initialMargin: s.initialMargin, maintenanceMargin: s.maintenanceMargin, status: 'OPEN'
+          });
+          log(`${s.name}: 자동 LIMIT 주문 접수 · ${side.toUpperCase()} ${qty}주 @ ${fmt(p)}`);
+        } else {
+          const p = side === 'buy' ? +(state.lastPrice * rnd(1.003, 1.02)).toFixed(2) : +(state.lastPrice * rnd(0.98, 0.997)).toFixed(2);
+          s.openOrders.push({
+            id: state.orderId++, studentId: s.id, studentName: s.name, side, type: 'stop', qty, remaining: qty,
+            triggerPrice: p, initialMargin: s.initialMargin, maintenanceMargin: s.maintenanceMargin, status: 'OPEN'
+          });
+          log(`${s.name}: 자동 STOP 주문 접수 · ${side.toUpperCase()} ${qty}주 @ ${fmt(p)}`);
+        }
+      }
+      render();
+    }
+
+    function nextTick() {
+      state.tick += 1;
+      state.symbol = $('symbol').value.trim() || 'ACME';
+      state.volatility = Number($('volatility').value);
+      state.drift = Number($('drift').value);
+      state.spreadBps = Number($('spreadBps').value);
+      const shock = state.drift + state.newsShock + normalRandom() * state.volatility;
+      state.newsShock *= 0.5;
+      state.lastPrice = Math.max(1, +(state.lastPrice * (1 + shock)).toFixed(2));
+      state.history.push(state.lastPrice);
+      if (state.history.length > 100) state.history.shift();
+      rebuildBook();
+      processOpenOrders();
+      enforceMarginCalls();
+      render();
+    }
+
+    function newsEvent() {
+      const events = [
+        { text: '호실적 발표', shock: 0.03 },
+        { text: '대형 수주 계약', shock: 0.018 },
+        { text: '규제 리스크 확대', shock: -0.024 },
+        { text: '실적 가이던스 하향', shock: -0.032 },
+        { text: '공매도 급증 보도', shock: -0.016 },
+        { text: 'AI 신제품 기대감', shock: 0.021 },
+      ];
+      const ev = events[Math.floor(Math.random() * events.length)];
+      state.newsShock += ev.shock;
+      log(`뉴스 이벤트: ${ev.text} · 향후 틱 가격충격 ${ev.shock > 0 ? '+' : ''}${(ev.shock * 100).toFixed(1)}%`, ev.shock > 0 ? 'positive' : 'negative');
+      render();
+    }
+
+    function cancelStudentOrders() {
+      const s = activeStudent();
+      const count = s.openOrders.length;
+      s.openOrders = [];
+      log(`${s.name}: 미체결 주문 ${count}건 취소`);
+      render();
+    }
+
+    function addStudent() {
+      const name = $('studentName').value.trim() || `Student ${state.studentId}`;
+      if (state.students.length >= 12) {
+        alert('최대 12명까지 추가할 수 있습니다.');
+        return;
+      }
+      const s = createStudent(name);
+      state.students.push(s);
+      state.activeStudentId = s.id;
+      $('studentName').value = '';
+      log(`학생 추가: ${s.name}`);
+      render();
+    }
+
+    function resetAll() {
+      clearInterval(state.timer);
+      state.lastPrice = 100;
+      state.history = Array.from({ length: 45 }, (_, i) => 100 + Math.sin(i / 5) * 0.9);
+      state.tick = 0;
+      state.orderId = 1;
+      state.newsShock = 0;
+      seedStudents(Math.max(2, Math.min(12, Number($('newStudentCount').value || 4))));
+      $('logBox').innerHTML = '';
+      rebuildBook();
+      log('시뮬레이터 전체 초기화 완료');
+      render();
+    }
+
+    function drawChart() {
+      const canvas = $('priceChart');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(0, 0, w, h);
+      const data = state.history;
+      const min = Math.min(...data) * 0.995;
+      const max = Math.max(...data) * 1.005;
+      const pad = 24;
+      ctx.strokeStyle = '#243041';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        const y = pad + (h - pad * 2) * i / 3;
+        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+      }
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((p, i) => {
+        const x = pad + (w - pad * 2) * i / (data.length - 1);
+        const y = h - pad - ((p - min) / (max - min || 1)) * (h - pad * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(`${state.symbol} Price: ${fmt(state.lastPrice)}`, 12, 16);
+      ctx.fillText(`High: ${fmt(max / 1.005)}`, w - 120, 16);
+      ctx.fillText(`Low: ${fmt(min / 0.995)}`, w - 120, h - 10);
+    }
+
+    function renderBooks() {
+      $('askBook').innerHTML = state.askBook.slice().reverse().map(x =>
+        `<tr><td>${x.level}</td><td class="sell-text">${fmt(x.price)}</td><td>${x.qty}</td></tr>`
+      ).join('');
+      $('bidBook').innerHTML = state.bidBook.map(x =>
+        `<tr><td>${x.level}</td><td class="buy-text">${fmt(x.price)}</td><td>${x.qty}</td></tr>`
+      ).join('');
+      $('bestBid').textContent = fmt(state.bidBook[0].price);
+      $('bestAsk').textContent = fmt(state.askBook[0].price);
+    }
+
+    function renderOpenOrders() {
+      const rows = state.students.flatMap(s => s.openOrders.map(o => ({ ...o, studentName: s.name })));
+      $('openOrders').innerHTML = rows.length ? rows.map(o => `
+        <tr>
+          <td>${o.id}</td>
+          <td>${o.studentName}</td>
+          <td><span class="pill ${o.side}">${o.side.toUpperCase()}</span></td>
+          <td>${o.type.toUpperCase()}</td>
+          <td>${o.remaining}</td>
+          <td>${fmt(o.triggerPrice)}</td>
+          <td>${o.status}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="7" class="tag">현재 미체결 주문 없음</td></tr>`;
+    }
+
+    function renderLeaderboard() {
+      const ranked = state.students.map(s => {
+        const pnl = s.realizedPnl + getUnrealized(s);
+        return { s, equity: getEquity(s), pnl, ratio: getMarginRatio(s) };
+      }).sort((a, b) => b.equity - a.equity);
+
+      $('leaderboard').innerHTML = ranked.map((x, idx) => `
+        <tr class="${idx === 0 ? 'leader-top' : ''}">
+          <td>${idx + 1}</td>
+          <td>${x.s.name}${x.s.id === Number(state.activeStudentId) ? ' ★' : ''}</td>
+          <td>${x.s.position}</td>
+          <td>${fmt(x.s.cash)}</td>
+          <td>${fmt(x.equity)}</td>
+          <td class="${x.pnl > 0 ? 'positive' : x.pnl < 0 ? 'negative' : ''}">${fmt(x.pnl)}</td>
+          <td class="${x.ratio !== Infinity && x.ratio < x.s.maintenanceMargin ? 'danger' : ''}">${x.ratio === Infinity ? '∞' : x.ratio.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderStudentSelector() {
+      $('activeStudent').innerHTML = state.students.map(s =>
+        `<option value="${s.id}" ${s.id === Number(state.activeStudentId) ? 'selected' : ''}>${s.name}</option>`
+      ).join('');
+      $('studentCount').textContent = state.students.length;
+    }
+
+    function renderActiveStudent() {
+      const s = activeStudent();
+      const unrealized = getUnrealized(s);
+      const equity = getEquity(s);
+      const ratio = getMarginRatio(s);
+      $('cash').textContent = fmt(s.cash);
+      $('position').textContent = s.position.toLocaleString();
+      $('avgCost').textContent = fmt(s.avgCost);
+      $('realizedPnl').textContent = fmt(s.realizedPnl);
+      $('realizedPnl').className = 'small-value ' + (s.realizedPnl > 0 ? 'positive' : s.realizedPnl < 0 ? 'negative' : '');
+      $('unrealizedPnl').textContent = fmt(unrealized);
+      $('unrealizedPnl').className = 'small-value ' + (unrealized > 0 ? 'positive' : unrealized < 0 ? 'negative' : '');
+      $('equity').textContent = fmt(equity);
+      $('marginRatio').textContent = ratio === Infinity ? '∞' : ratio.toFixed(2);
+      $('marginRatio').className = 'small-value ' + (ratio !== Infinity && ratio < s.maintenanceMargin ? 'danger' : ratio < s.maintenanceMargin + 0.1 ? 'warning' : '');
+      $('initialMargin').value = String(s.initialMargin);
+      $('maintenanceMargin').value = String(s.maintenanceMargin);
+    }
+
+    function renderTopMetrics() {
+      $('lastPrice').textContent = fmt(state.lastPrice);
+      $('tickNum').textContent = state.tick.toLocaleString();
+      const drift = Number($('drift').value);
+      $('trendLabel').textContent = drift > 0 ? '상승장' : drift < 0 ? '하락장' : '중립';
+    }
+
+    function render() {
+      renderTopMetrics();
+      renderStudentSelector();
+      renderActiveStudent();
+      renderBooks();
+      renderOpenOrders();
+      renderLeaderboard();
+      drawChart();
+    }
+
+    $('submitOrderBtn').addEventListener('click', submitOrder);
+    $('cancelStudentOrdersBtn').addEventListener('click', cancelStudentOrders);
+    $('addStudentBtn').addEventListener('click', addStudent);
+    $('stepBtn').addEventListener('click', nextTick);
+    $('botBtn').addEventListener('click', botRound);
+    $('newsBtn').addEventListener('click', newsEvent);
+    $('resetBtn').addEventListener('click', resetAll);
+    $('playBtn').addEventListener('click', () => {
+      clearInterval(state.timer);
+      const speed = Math.max(120, Number($('speed').value || 800));
+      state.timer = setInterval(() => { nextTick(); if (Math.random() < 0.45) botRound(); }, speed);
+      log(`자동 진행 시작 (${speed}ms)`);
+    });
+    $('pauseBtn').addEventListener('click', () => { clearInterval(state.timer); log('자동 진행 정지'); });
+    $('activeStudent').addEventListener('change', (e) => { state.activeStudentId = Number(e.target.value); render(); });
+    $('orderType').addEventListener('change', (e) => {
+      const type = e.target.value;
+      $('priceInput').disabled = type === 'market';
+      $('priceLabel').textContent = type === 'limit' ? '지정가 (Limit)' : type === 'stop' ? '발동가 (Stop)' : '가격 입력 불필요';
+    });
+
+    seedStudents(4);
+    rebuildBook();
+    log('확장형 시뮬레이터 준비 완료. 학생을 선택하고 주문을 넣어 보세요.');
+    render();
+  </script>
+</body>
+</html>
